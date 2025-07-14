@@ -1,60 +1,42 @@
 const PASSWORD = "920583104217";
-const BIN_ID = "6874d0705a9d63639737dc42";
-const API_KEY = "$2a$10$Op35jLJdn0V2TX13uR2A.eCiXuW69Hj/W8VYRGB4TRX2X9MuFXts2";
-const BIN_URL = `https://api.jsonbin.io/v3/b/${BIN_ID}`;
-
 let isAdmin = false;
 let savedData = {};
 let editedData = {};
 let searchQuery = "";
 
+const BIN_ID = "6874d0705a9d63639737dc42";
+const MASTER_KEY = "$2a$10$Op35jLJdn0V2TX13uR2A.eCiXuW69Hj/W8VYRGB4TRX2X9MuFXts2";
+
 // Загрузка с JSONBin
 async function loadData() {
   try {
-    const response = await fetch(BIN_URL, {
+    const res = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, {
       headers: {
-        "X-Master-Key": API_KEY,
-      },
+        "X-Master-Key": MASTER_KEY
+      }
     });
-    const json = await response.json();
+    const json = await res.json();
     const arrayData = json.record;
 
-    // Преобразуем массив в объект с ID
+    if (!Array.isArray(arrayData)) {
+      console.error("Ошибка: ожидается массив, а пришло:", arrayData);
+      return;
+    }
+
     savedData = {};
     arrayData.forEach((item, index) => {
-      const id = `device_${index}_${Date.now()}`;
-      savedData[id] = item;
+      const id = `device_${index}`;
+      savedData[id] = {
+        name: item.name,
+        address: item.address,
+        mapLink: item.mapLink
+      };
     });
+
     editedData = JSON.parse(JSON.stringify(savedData));
     renderButtons();
-  } catch (error) {
-    alert("Ошибка при загрузке данных!");
-    console.error(error);
-  }
-}
-
-// Сохранение в JSONBin
-async function saveToJsonBin() {
-  try {
-    const arrayData = Object.values(editedData);
-    const response = await fetch(BIN_URL, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        "X-Master-Key": API_KEY,
-        "X-Bin-Private": "false"
-      },
-      body: JSON.stringify(arrayData),
-    });
-    if (response.ok) {
-      savedData = JSON.parse(JSON.stringify(editedData));
-      alert("Данные успешно сохранены в облако!");
-    } else {
-      alert("Ошибка при сохранении данных в облако");
-    }
-  } catch (error) {
-    console.error("Ошибка сохранения:", error);
-    alert("Ошибка сети при сохранении!");
+  } catch (err) {
+    console.error("Ошибка загрузки данных:", err);
   }
 }
 
@@ -117,7 +99,7 @@ function renderButtons() {
       deleteBtn.className = "delete-button";
       deleteBtn.onclick = (e) => {
         e.stopPropagation();
-        const confirmDelete = confirm(`Удалить "${data.name || 'Без названия'}"?`);
+        const confirmDelete = confirm(`Вы точно хотите удалить "${data.name || 'Без названия'}"?`);
         if (confirmDelete) {
           delete editedData[key];
           renderButtons();
@@ -141,7 +123,7 @@ function renderButtons() {
       block.appendChild(title);
       block.appendChild(address);
 
-      if (data.mapLink && data.mapLink.toLowerCase().includes("http")) {
+      if (data.mapLink) {
         const linkButton = document.createElement("a");
         linkButton.href = data.mapLink;
         linkButton.textContent = "Открыть в карте";
@@ -172,8 +154,10 @@ function showSaveButton() {
 }
 
 function saveAllChanges() {
-  saveToJsonBin();
+  savedData = JSON.parse(JSON.stringify(editedData));
+  localStorage.setItem("apparatusData", JSON.stringify(savedData));
   document.getElementById("save-all").style.display = "none";
+  alert("Все изменения сохранены (локально)!");
   renderButtons();
 }
 
@@ -188,4 +172,5 @@ document.getElementById("search-input").addEventListener("input", (e) => {
   renderButtons();
 });
 
+// Загружаем с JSONBin при запуске
 loadData();
