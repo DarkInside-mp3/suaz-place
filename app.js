@@ -1,163 +1,178 @@
-document.addEventListener("DOMContentLoaded", () => {
-  const PASSWORD = "920583104217";
-  let isAdmin = false;
-  let savedData = {};
-  let editedData = {};
-  let searchQuery = "";
+import { initializeApp } from "firebase/app";
+import { getDatabase, ref, onValue, set } from "firebase/database";
 
-  // Здесь твой список аппаратов — замени на свой, если нужно
-  const initialData = {
-    device_1: {
-      name: "Аппарат возле школы",
-      address: "г. Баку, ул. Ясамальская 12",
-      mapLink: "https://maps.google.com"
-    },
-    device_2: {
-      name: "Аппарат в парке",
-      address: "ул. Парковая, 25",
-      mapLink: ""
-    }
-  };
+const firebaseConfig = {
+  apiKey: "AIzaSyDn0YFzT9Xb2HZASgpEPna3n71IJYzrUlw",
+  authDomain: "suaz-map-7ec10.firebaseapp.com",
+  databaseURL: "https://suaz-map-7ec10-default-rtdb.firebaseio.com",
+  projectId: "suaz-map-7ec10",
+  storageBucket: "suaz-map-7ec10.firebasestorage.app",
+  messagingSenderId: "636327827694",
+  appId: "1:636327827694:web:89c68cdba0b15e65f93bff"
+};
 
-  function loadData() {
-    savedData = JSON.parse(JSON.stringify(initialData));
-    editedData = JSON.parse(JSON.stringify(savedData));
-    renderButtons();
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+const dataRef = ref(db, "apparatusData");
+
+const PASSWORD = "920583104217";
+let isAdmin = false;
+let savedData = {};
+let editedData = {};
+let searchQuery = "";
+
+const loginArea = document.getElementById("login-area");
+const saveAllBtn = document.getElementById("save-all");
+
+function renderButtons() {
+  const container = document.getElementById("buttons-container");
+  container.innerHTML = "";
+
+  const keys = Object.keys(editedData).sort();
+
+  if (isAdmin) {
+    const addButton = document.createElement("button");
+    addButton.textContent = "➕ Добавить аппарат";
+    addButton.className = "add-button";
+    addButton.onclick = () => {
+      const id = `device_${Date.now()}`;
+      editedData[id] = { name: "", address: "", mapLink: "" };
+      renderButtons();
+      showSaveButton();
+    };
+    container.appendChild(addButton);
   }
 
-  document.getElementById("search-input").addEventListener("input", (e) => {
-    searchQuery = e.target.value;
-    renderButtons();
+  const filteredKeys = keys.filter(key => {
+    const name = editedData[key].name.toLowerCase();
+    return name.includes(searchQuery.toLowerCase());
   });
 
-  function saveAllChanges() {
-    savedData = JSON.parse(JSON.stringify(editedData));
-    alert("Изменения сохранены локально (не в Firebase)!");
-    document.getElementById("save-all").style.display = "none";
-    renderButtons();
-  }
-
-  function showSaveButton() {
-    document.getElementById("save-all").style.display = "block";
-  }
-
-  function checkPassword() {
-    const input = document.getElementById("admin-password");
-    if (input.value === PASSWORD) {
-      isAdmin = true;
-      input.value = "";
-      document.getElementById("login-area").style.display = "none";
-      renderButtons();
-    } else {
-      alert("Неверный пароль");
-    }
-  }
-
-  function clearSearch() {
-    searchQuery = "";
-    document.getElementById("search-input").value = "";
-    renderButtons();
-  }
-
-  function renderButtons() {
-    const container = document.getElementById("buttons-container");
-    container.innerHTML = "";
-
-    const keys = Object.keys(editedData).sort();
+  filteredKeys.forEach(key => {
+    const data = editedData[key];
+    const block = document.createElement("div");
+    block.className = "button-block";
 
     if (isAdmin) {
-      const addButton = document.createElement("button");
-      addButton.textContent = "➕ Добавить аппарат";
-      addButton.className = "add-button";
-      addButton.onclick = () => {
-        const id = `device_${Date.now()}`;
-        editedData[id] = { name: "", address: "", mapLink: "" };
-        renderButtons();
+      const nameInput = document.createElement("input");
+      nameInput.value = data.name;
+      nameInput.placeholder = "Название аппарата";
+      nameInput.oninput = () => {
+        editedData[key].name = nameInput.value;
         showSaveButton();
       };
-      container.appendChild(addButton);
+
+      const addressInput = document.createElement("textarea");
+      addressInput.value = data.address;
+      addressInput.placeholder = "Адрес аппарата";
+      addressInput.oninput = () => {
+        editedData[key].address = addressInput.value;
+        showSaveButton();
+      };
+
+      const mapInput = document.createElement("input");
+      mapInput.value = data.mapLink;
+      mapInput.placeholder = "Ссылка на карту";
+      mapInput.oninput = () => {
+        editedData[key].mapLink = mapInput.value;
+        showSaveButton();
+      };
+
+      const deleteBtn = document.createElement("button");
+      deleteBtn.textContent = "🗑";
+      deleteBtn.className = "delete-button";
+      deleteBtn.onclick = e => {
+        e.stopPropagation();
+        if (confirm(`Удалить аппарат "${data.name || "Без названия"}"?`)) {
+          delete editedData[key];
+          renderButtons();
+          showSaveButton();
+        }
+      };
+
+      block.appendChild(deleteBtn);
+      block.appendChild(nameInput);
+      block.appendChild(addressInput);
+      block.appendChild(mapInput);
+    } else {
+      if (!data.name && !data.address) return;
+
+      const title = document.createElement("h3");
+      title.textContent = data.name || "Без названия";
+
+      const address = document.createElement("p");
+      address.textContent = data.address || "Адрес не указан";
+
+      block.appendChild(title);
+      block.appendChild(address);
+
+      if (data.mapLink) {
+        const link = document.createElement("a");
+        link.href = data.mapLink;
+        link.target = "_blank";
+        link.textContent = "Открыть в карте";
+        link.className = "map-link-button";
+        block.appendChild(link);
+      }
     }
 
-    const filteredKeys = keys.filter((key) =>
-      editedData[key].name.toLowerCase().includes(searchQuery.toLowerCase())
-    );
+    container.appendChild(block);
+  });
+}
 
-    filteredKeys.forEach((key) => {
-      const data = editedData[key];
-      const block = document.createElement("div");
-      block.className = "button-block";
+function showSaveButton() {
+  saveAllBtn.style.display = "block";
+}
 
-      if (isAdmin) {
-        const nameInput = document.createElement("input");
-        nameInput.value = data.name;
-        nameInput.placeholder = "Название аппарата";
-        nameInput.oninput = () => {
-          editedData[key].name = nameInput.value;
-          showSaveButton();
-        };
+function hideSaveButton() {
+  saveAllBtn.style.display = "none";
+}
 
-        const addressInput = document.createElement("textarea");
-        addressInput.value = data.address;
-        addressInput.placeholder = "Адрес аппарата";
-        addressInput.oninput = () => {
-          editedData[key].address = addressInput.value;
-          showSaveButton();
-        };
-
-        const mapInput = document.createElement("input");
-        mapInput.value = data.mapLink;
-        mapInput.placeholder = "Ссылка на карту";
-        mapInput.oninput = () => {
-          editedData[key].mapLink = mapInput.value;
-          showSaveButton();
-        };
-
-        const deleteBtn = document.createElement("button");
-        deleteBtn.textContent = "🗑";
-        deleteBtn.className = "delete-button";
-        deleteBtn.onclick = (e) => {
-          e.stopPropagation();
-          if (confirm(`Удалить "${data.name || 'Без названия'}"?`)) {
-            delete editedData[key];
-            renderButtons();
-            showSaveButton();
-          }
-        };
-
-        block.appendChild(deleteBtn);
-        block.appendChild(nameInput);
-        block.appendChild(addressInput);
-        block.appendChild(mapInput);
-      } else {
-        if (!data.name && !data.address) return;
-
-        const title = document.createElement("h3");
-        title.textContent = data.name || "Без названия";
-
-        const address = document.createElement("p");
-        address.textContent = data.address || "Адрес не указан";
-
-        block.appendChild(title);
-        block.appendChild(address);
-
-        if (data.mapLink) {
-          const link = document.createElement("a");
-          link.href = data.mapLink;
-          link.target = "_blank";
-          link.textContent = "Открыть в карте";
-          link.className = "map-link-button";
-          block.appendChild(link);
-        }
-      }
-
-      container.appendChild(block);
-    });
+function checkPassword() {
+  const input = document.getElementById("admin-password");
+  if (input.value === PASSWORD) {
+    isAdmin = true;
+    input.value = "";
+    loginArea.style.display = "none";
+    renderButtons();
+  } else {
+    alert("Неверный пароль");
   }
+}
 
-  // Глобальные функции для кнопок из HTML
-  window.checkPassword = checkPassword;
-  window.clearSearch = clearSearch;
-  window.saveAllChanges = saveAllChanges;
+function clearSearch() {
+  searchQuery = "";
+  document.getElementById("search-input").value = "";
+  renderButtons();
+}
 
-  loadData();
+function saveAllChanges() {
+  set(dataRef, editedData)
+    .then(() => {
+      alert("Изменения сохранены!");
+      hideSaveButton();
+    })
+    .catch(error => {
+      alert("Ошибка сохранения: " + error.message);
+    });
+}
+
+document.getElementById("search-input").addEventListener("input", e => {
+  searchQuery = e.target.value;
+  renderButtons();
 });
+
+// Слушаем изменения данных в Firebase в реальном времени
+onValue(dataRef, snapshot => {
+  const data = snapshot.val() || {};
+  savedData = data;
+  editedData = JSON.parse(JSON.stringify(savedData));
+  renderButtons();
+});
+
+// Глобальные функции для кнопок в HTML
+window.checkPassword = checkPassword;
+window.clearSearch = clearSearch;
+window.saveAllChanges = saveAllChanges;
+
+hideSaveButton();
