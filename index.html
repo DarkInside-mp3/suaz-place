@@ -2,17 +2,33 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Аппараты</title>
-  <link rel="stylesheet" href="styles.css" />
+  <title>Аппараты SuAz</title>
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <h1>Аппараты</h1>
-  <div id="device-container" class="grid"></div>
+  <h1>Аппараты по выдаче воды</h1>
 
-  <button id="edit-button">Редактировать</button>
-  <button id="save-button" style="display: none;">Сохранить</button>
+  <div id="login-area">
+    <input type="password" id="admin-password" placeholder="Введите пароль для редактирования" />
+    <button onclick="checkPassword()">Войти</button>
+  </div>
 
+  <div id="search-area">
+    <input type="text" id="search-input" placeholder="Поиск по названию..." />
+    <button id="clear-search" onclick="clearSearch()">❌</button>
+  </div>
+
+  <div id="buttons-container"></div>
+
+  <div class="footer-text">made by Eldar Aliev</div>
+
+  <button id="save-all" onclick="saveAllChanges()">💾 Сохранить все</button>
+
+  <!-- Firebase SDK -->
+  <script type="module" src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js"></script>
+  <script type="module" src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js"></script>
+
+  <!-- Основной код -->
   <script type="module" src="app.js"></script>
 </body>
 </html>
