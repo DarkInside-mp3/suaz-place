@@ -7,7 +7,6 @@ let searchQuery = "";
 const loginArea = document.getElementById("login-area");
 const saveAllBtn = document.getElementById("save-all");
 
-// Firebase конфиг и инициализация
 const firebaseConfig = {
   apiKey: "AIzaSyDn0YFzT9Xb2HZASgpEPna3n71IJYzrUlw",
   authDomain: "suaz-map-7ec10.firebaseapp.com",
@@ -19,7 +18,6 @@ const firebaseConfig = {
 };
 
 firebase.initializeApp(firebaseConfig);
-
 const db = firebase.database();
 const dataRef = db.ref("apparatusData");
 
@@ -160,7 +158,6 @@ document.getElementById("search-input").addEventListener("input", e => {
   renderButtons();
 });
 
-// Слушаем изменения из базы в реальном времени
 dataRef.on('value', snapshot => {
   const data = snapshot.val() || {};
   savedData = data;
@@ -170,7 +167,6 @@ dataRef.on('value', snapshot => {
 
 hideSaveButton();
 
-// Функции для кнопок из HTML
 window.checkPassword = checkPassword;
 window.clearSearch = clearSearch;
 window.saveAllChanges = saveAllChanges;
