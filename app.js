@@ -1,5 +1,3 @@
-// app.js (CDN-версия)
-
 const PASSWORD = "920583104217";
 let isAdmin = false;
 let savedData = {};
@@ -9,7 +7,7 @@ let searchQuery = "";
 const loginArea = document.getElementById("login-area");
 const saveAllBtn = document.getElementById("save-all");
 
-// Инициализация Firebase через глобальный объект firebase (CDN)
+// Firebase конфиг и инициализация
 const firebaseConfig = {
   apiKey: "AIzaSyDn0YFzT9Xb2HZASgpEPna3n71IJYzrUlw",
   authDomain: "suaz-map-7ec10.firebaseapp.com",
@@ -92,4 +90,87 @@ function renderButtons() {
 
       block.appendChild(deleteBtn);
       block.appendChild(nameInput);
-      block.ap
+      block.appendChild(addressInput);
+      block.appendChild(mapInput);
+    } else {
+      if (!data.name && !data.address) return;
+
+      const title = document.createElement("h3");
+      title.textContent = data.name || "Без названия";
+
+      const address = document.createElement("p");
+      address.textContent = data.address || "Адрес не указан";
+
+      block.appendChild(title);
+      block.appendChild(address);
+
+      if (data.mapLink) {
+        const link = document.createElement("a");
+        link.href = data.mapLink;
+        link.target = "_blank";
+        link.textContent = "Открыть в карте";
+        link.className = "map-link-button";
+        block.appendChild(link);
+      }
+    }
+
+    container.appendChild(block);
+  });
+}
+
+function showSaveButton() {
+  saveAllBtn.style.display = "block";
+}
+
+function hideSaveButton() {
+  saveAllBtn.style.display = "none";
+}
+
+function checkPassword() {
+  const input = document.getElementById("admin-password");
+  if (input.value === PASSWORD) {
+    isAdmin = true;
+    input.value = "";
+    loginArea.style.display = "none";
+    renderButtons();
+  } else {
+    alert("Неверный пароль");
+  }
+}
+
+function clearSearch() {
+  searchQuery = "";
+  document.getElementById("search-input").value = "";
+  renderButtons();
+}
+
+function saveAllChanges() {
+  dataRef.set(editedData)
+    .then(() => {
+      alert("Изменения сохранены!");
+      hideSaveButton();
+    })
+    .catch(error => {
+      alert("Ошибка сохранения: " + error.message);
+    });
+}
+
+document.getElementById("search-input").addEventListener("input", e => {
+  searchQuery = e.target.value;
+  renderButtons();
+});
+
+// Слушаем изменения из базы в реальном времени
+dataRef.on('value', snapshot => {
+  const data = snapshot.val() || {};
+  savedData = data;
+  editedData = JSON.parse(JSON.stringify(savedData));
+  renderButtons();
+});
+
+hideSaveButton();
+
+// Функции для кнопок из HTML
+window.checkPassword = checkPassword;
+window.clearSearch = clearSearch;
+window.saveAllChanges = saveAllChanges;
