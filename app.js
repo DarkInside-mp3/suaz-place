@@ -1,23 +1,16 @@
 const PASSWORD = "920583104217";
 let isAdmin = false;
-let editedData = [];
 let savedData = [];
+let editedData = [];
 let searchQuery = "";
 
 const firebaseUrl = "https://suaz-map-7ec10-default-rtdb.firebaseio.com/apparatusData.json";
 
-// 🔁 Загрузка данных из Firebase
 async function loadData() {
   try {
     const res = await fetch(firebaseUrl);
     const data = await res.json();
-
-    if (Array.isArray(data)) {
-      savedData = data.filter(Boolean); // удалим возможные пустые
-    } else {
-      savedData = [];
-    }
-
+    savedData = Array.isArray(data) ? data.filter(Boolean) : [];
     editedData = JSON.parse(JSON.stringify(savedData));
     renderButtons();
   } catch (e) {
@@ -25,7 +18,6 @@ async function loadData() {
   }
 }
 
-// 💾 Сохранение в Firebase
 async function saveAllChanges() {
   try {
     const res = await fetch(firebaseUrl, {
@@ -33,9 +25,7 @@ async function saveAllChanges() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(editedData),
     });
-
     if (!res.ok) throw new Error("Ошибка сохранения");
-
     savedData = JSON.parse(JSON.stringify(editedData));
     document.getElementById("save-all").style.display = "none";
     alert("Все изменения сохранены!");
@@ -51,87 +41,72 @@ function renderButtons() {
   container.innerHTML = "";
 
   if (isAdmin) {
-    const addButton = document.createElement("button");
-    addButton.textContent = "➕ Добавить аппарат";
-    addButton.className = "add-button";
-    addButton.onclick = () => {
+    const addBtn = document.createElement("button");
+    addBtn.textContent = "➕ Добавить аппарат";
+    addBtn.className = "add-button";
+    addBtn.onclick = () => {
       editedData.push({ name: "", address: "", mapLink: "" });
       renderButtons();
       showSaveButton();
     };
-    container.appendChild(addButton);
+    container.appendChild(addBtn);
   }
 
-  const filtered = editedData.filter((item) =>
+  const filtered = editedData.filter(item =>
     (item.name || "").toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  filtered.forEach((data, index) => {
+  filtered.forEach((data, idx) => {
     const block = document.createElement("div");
     block.className = "button-block";
 
     if (isAdmin) {
       const nameInput = document.createElement("input");
-      nameInput.value = data.name;
       nameInput.placeholder = "Название аппарата";
-      nameInput.oninput = () => {
-        editedData[index].name = nameInput.value;
-        showSaveButton();
-      };
-
-      const addressInput = document.createElement("textarea");
-      addressInput.value = data.address;
-      addressInput.placeholder = "Адрес аппарата";
-      addressInput.oninput = () => {
-        editedData[index].address = addressInput.value;
-        showSaveButton();
-      };
-
+      nameInput.value = data.name;
+      nameInput.oninput = () => { editedData[idx].name = nameInput.value; showSaveButton(); };
+      
+      const addrInput = document.createElement("textarea");
+      addrInput.placeholder = "Адрес аппарата";
+      addrInput.value = data.address;
+      addrInput.oninput = () => { editedData[idx].address = addrInput.value; showSaveButton(); };
+      
       const mapInput = document.createElement("input");
-      mapInput.value = data.mapLink;
       mapInput.placeholder = "Ссылка на карту";
-      mapInput.oninput = () => {
-        editedData[index].mapLink = mapInput.value;
-        showSaveButton();
-      };
+      mapInput.value = data.mapLink;
+      mapInput.oninput = () => { editedData[idx].mapLink = mapInput.value; showSaveButton(); };
 
-      const deleteBtn = document.createElement("button");
-      deleteBtn.textContent = "🗑";
-      deleteBtn.className = "delete-button";
-      deleteBtn.onclick = () => {
+      const delBtn = document.createElement("button");
+      delBtn.className = "delete-button";
+      delBtn.textContent = "🗑";
+      delBtn.onclick = () => {
         if (confirm(`Удалить "${data.name || "Без названия"}"?`)) {
-          editedData.splice(index, 1);
+          editedData.splice(idx, 1);
           renderButtons();
           showSaveButton();
         }
       };
 
-      block.appendChild(deleteBtn);
-      block.appendChild(nameInput);
-      block.appendChild(addressInput);
-      block.appendChild(mapInput);
+      block.append(delBtn, nameInput, addrInput, mapInput);
     } else {
       if (!data.name && !data.address) return;
 
       const title = document.createElement("h3");
       title.textContent = data.name || "Без названия";
+      const addr = document.createElement("p");
+      addr.textContent = data.address || "Адрес не указан";
 
-      const address = document.createElement("p");
-      address.textContent = data.address || "Адрес не указан";
-
-      block.appendChild(title);
-      block.appendChild(address);
+      block.append(title, addr);
 
       if (data.mapLink) {
-        const linkButton = document.createElement("a");
-        linkButton.href = data.mapLink;
-        linkButton.textContent = "Открыть в карте";
-        linkButton.target = "_blank";
-        linkButton.className = "map-link-button";
-        block.appendChild(linkButton);
+        const linkBtn = document.createElement("a");
+        linkBtn.href = data.mapLink;
+        linkBtn.target = "_blank";
+        linkBtn.className = "map-link-button";
+        linkBtn.textContent = "Открыть в карте";
+        block.appendChild(linkBtn);
       }
     }
-
     container.appendChild(block);
   });
 }
@@ -147,9 +122,7 @@ function checkPassword() {
     input.value = "";
     document.getElementById("login-area").style.display = "none";
     renderButtons();
-  } else {
-    alert("Неверный пароль");
-  }
+  } else alert("Неверный пароль");
 }
 
 function clearSearch() {
@@ -158,10 +131,9 @@ function clearSearch() {
   renderButtons();
 }
 
-document.getElementById("search-input").addEventListener("input", (e) => {
+document.getElementById("search-input").addEventListener("input", e => {
   searchQuery = e.target.value;
   renderButtons();
 });
 
-// 🚀 Старт
 loadData();
