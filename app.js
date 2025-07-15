@@ -23,7 +23,8 @@ const db = firebase.database();
 const dataRef = db.ref("apparatusData");
 
 function renderButtons() {
-  console.log("Данные для рендера:", editedData);
+  console.log("Данные для рендера:", JSON.stringify(editedData, null, 2));
+  console.log("Ключи для рендера:", Object.keys(editedData));
 
   const container = document.getElementById("buttons-container");
   container.innerHTML = "";
@@ -49,6 +50,8 @@ function renderButtons() {
 
   filteredKeys.forEach((key) => {
     const data = editedData[key];
+    console.log("Рендерим:", key, data);
+
     const block = document.createElement("div");
     block.className = "button-block";
 
