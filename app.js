@@ -1,47 +1,51 @@
 const PASSWORD = "920583104217";
-const FIREBASE_URL = "https://suaz-map-7ec10-default-rtdb.firebaseio.com/apparatusData.json";
-
 let isAdmin = false;
-let savedData = [];       // данные с Firebase
-let editedData = [];      // копия для редактирования
+let editedData = [];
+let savedData = [];
 let searchQuery = "";
 
-// Получение данных из Firebase
-async function fetchData() {
+const firebaseUrl = "https://suaz-map-7ec10-default-rtdb.firebaseio.com/apparatusData.json";
+
+// 🔁 Загрузка данных из Firebase
+async function loadData() {
   try {
-    const response = await fetch(FIREBASE_URL);
-    const data = await response.json();
+    const res = await fetch(firebaseUrl);
+    const data = await res.json();
+
     if (Array.isArray(data)) {
-      savedData = data.filter(Boolean); // убираем пустые элементы
-    } else if (typeof data === "object" && data !== null) {
-      // В случае если вдруг данные в формате объекта
-      savedData = Object.values(data).filter(Boolean);
+      savedData = data.filter(Boolean); // удалим возможные пустые
     } else {
       savedData = [];
     }
+
     editedData = JSON.parse(JSON.stringify(savedData));
     renderButtons();
-  } catch (error) {
-    console.error("Ошибка при загрузке данных:", error);
+  } catch (e) {
+    console.error("Ошибка загрузки данных:", e);
   }
 }
 
-// Отправка данных в Firebase
-async function uploadData() {
+// 💾 Сохранение в Firebase
+async function saveAllChanges() {
   try {
-    await fetch(FIREBASE_URL, {
+    const res = await fetch(firebaseUrl, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(editedData),
     });
+
+    if (!res.ok) throw new Error("Ошибка сохранения");
+
+    savedData = JSON.parse(JSON.stringify(editedData));
+    document.getElementById("save-all").style.display = "none";
     alert("Все изменения сохранены!");
-  } catch (error) {
-    console.error("Ошибка при сохранении данных:", error);
-    alert("Произошла ошибка при сохранении!");
+    renderButtons();
+  } catch (e) {
+    alert("Ошибка при сохранении данных");
+    console.error(e);
   }
 }
 
-// Рендер кнопок
 function renderButtons() {
   const container = document.getElementById("buttons-container");
   container.innerHTML = "";
@@ -58,16 +62,17 @@ function renderButtons() {
     container.appendChild(addButton);
   }
 
-  editedData.forEach((data, index) => {
-    const name = (data.name || "").toLowerCase();
-    if (searchQuery && !name.includes(searchQuery.toLowerCase())) return;
+  const filtered = editedData.filter((item) =>
+    (item.name || "").toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
+  filtered.forEach((data, index) => {
     const block = document.createElement("div");
     block.className = "button-block";
 
     if (isAdmin) {
       const nameInput = document.createElement("input");
-      nameInput.value = data.name || "";
+      nameInput.value = data.name;
       nameInput.placeholder = "Название аппарата";
       nameInput.oninput = () => {
         editedData[index].name = nameInput.value;
@@ -75,7 +80,7 @@ function renderButtons() {
       };
 
       const addressInput = document.createElement("textarea");
-      addressInput.value = data.address || "";
+      addressInput.value = data.address;
       addressInput.placeholder = "Адрес аппарата";
       addressInput.oninput = () => {
         editedData[index].address = addressInput.value;
@@ -83,7 +88,7 @@ function renderButtons() {
       };
 
       const mapInput = document.createElement("input");
-      mapInput.value = data.mapLink || "";
+      mapInput.value = data.mapLink;
       mapInput.placeholder = "Ссылка на карту";
       mapInput.oninput = () => {
         editedData[index].mapLink = mapInput.value;
@@ -93,10 +98,8 @@ function renderButtons() {
       const deleteBtn = document.createElement("button");
       deleteBtn.textContent = "🗑";
       deleteBtn.className = "delete-button";
-      deleteBtn.onclick = (e) => {
-        e.stopPropagation();
-        const confirmDelete = confirm(`Удалить автомат "${data.name || 'Без названия'}"?`);
-        if (confirmDelete) {
+      deleteBtn.onclick = () => {
+        if (confirm(`Удалить "${data.name || "Без названия"}"?`)) {
           editedData.splice(index, 1);
           renderButtons();
           showSaveButton();
@@ -133,7 +136,10 @@ function renderButtons() {
   });
 }
 
-// Проверка пароля
+function showSaveButton() {
+  document.getElementById("save-all").style.display = "block";
+}
+
 function checkPassword() {
   const input = document.getElementById("admin-password");
   if (input.value === PASSWORD) {
@@ -146,31 +152,16 @@ function checkPassword() {
   }
 }
 
-// Показать кнопку сохранения
-function showSaveButton() {
-  document.getElementById("save-all").style.display = "block";
-}
-
-// Сохранить изменения
-function saveAllChanges() {
-  savedData = JSON.parse(JSON.stringify(editedData));
-  uploadData();
-  document.getElementById("save-all").style.display = "none";
-  renderButtons();
-}
-
-// Очистка поиска
 function clearSearch() {
   searchQuery = "";
   document.getElementById("search-input").value = "";
   renderButtons();
 }
 
-// Поиск
 document.getElementById("search-input").addEventListener("input", (e) => {
   searchQuery = e.target.value;
   renderButtons();
 });
 
-// Старт
-fetchData();
+// 🚀 Старт
+loadData();
