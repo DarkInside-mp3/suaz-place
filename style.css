@@ -2,7 +2,7 @@
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 15px;
-  flex-grow: 1;
+  margin-bottom: 20px;
 }
 
 .button-block {
@@ -11,19 +11,18 @@
   padding: 12px;
   border-radius: 8px;
   text-align: left;
-  box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.1);
+  box-shadow: 2px 2px 6px rgba(0,0,0,0.1);
   position: relative;
-  min-height: 140px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
+  min-height: 140px;
 }
 
 .button-block input,
 .button-block textarea {
   width: 100%;
-  margin-top: 5px;
-  margin-bottom: 5px;
+  margin: 5px 0;
   padding: 5px;
   font-size: 14px;
 }
@@ -83,7 +82,7 @@
   border-radius: 8px;
   font-size: 14px;
   z-index: 1000;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 2px 10px rgba(0,0,0,0.2);
 }
 
 .footer-text {
@@ -96,9 +95,9 @@
 }
 
 #search-area {
-  margin-bottom: 20px;
   display: flex;
   gap: 8px;
+  margin-bottom: 20px;
 }
 
 #search-input {
