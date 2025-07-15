@@ -1,61 +1,40 @@
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getDatabase, ref, get, set } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
-
 document.addEventListener("DOMContentLoaded", () => {
-  // Firebase config
-  const firebaseConfig = {
-    apiKey: "AIzaSyDn0YFzT9Xb2HZASgpEPna3n71IJYzrUlw",
-    authDomain: "suaz-map-7ec10.firebaseapp.com",
-    databaseURL: "https://suaz-map-7ec10-default-rtdb.firebaseio.com",
-    projectId: "suaz-map-7ec10",
-    storageBucket: "suaz-map-7ec10.appspot.com",
-    messagingSenderId: "636327827694",
-    appId: "1:636327827694:web:89c68cdba0b15e65f93bff"
-  };
-
-  // Инициализация Firebase
-  const app = initializeApp(firebaseConfig);
-  const db = getDatabase(app);
-  const dataRef = ref(db, "apparatusData");
-
   const PASSWORD = "920583104217";
   let isAdmin = false;
   let savedData = {};
   let editedData = {};
   let searchQuery = "";
 
+  // Здесь твой список аппаратов — замени на свой, если нужно
+  const initialData = {
+    device_1: {
+      name: "Аппарат возле школы",
+      address: "г. Баку, ул. Ясамальская 12",
+      mapLink: "https://maps.google.com"
+    },
+    device_2: {
+      name: "Аппарат в парке",
+      address: "ул. Парковая, 25",
+      mapLink: ""
+    }
+  };
+
+  function loadData() {
+    savedData = JSON.parse(JSON.stringify(initialData));
+    editedData = JSON.parse(JSON.stringify(savedData));
+    renderButtons();
+  }
+
   document.getElementById("search-input").addEventListener("input", (e) => {
     searchQuery = e.target.value;
     renderButtons();
   });
 
-  async function loadData() {
-    try {
-      const snapshot = await get(dataRef);
-      if (snapshot.exists()) {
-        savedData = snapshot.val();
-        editedData = JSON.parse(JSON.stringify(savedData));
-      } else {
-        savedData = {};
-        editedData = {};
-      }
-      renderButtons();
-    } catch (error) {
-      console.error("Ошибка загрузки данных:", error);
-    }
-  }
-
-  async function saveAllChanges() {
-    try {
-      await set(dataRef, editedData);
-      savedData = JSON.parse(JSON.stringify(editedData));
-      document.getElementById("save-all").style.display = "none";
-      alert("Все изменения сохранены!");
-      renderButtons();
-    } catch (error) {
-      console.error("Ошибка сохранения:", error);
-      alert("Ошибка при сохранении данных!");
-    }
+  function saveAllChanges() {
+    savedData = JSON.parse(JSON.stringify(editedData));
+    alert("Изменения сохранены локально (не в Firebase)!");
+    document.getElementById("save-all").style.display = "none";
+    renderButtons();
   }
 
   function showSaveButton() {
@@ -175,7 +154,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // Вешаем функции на глобальный объект, чтобы кнопки в html их видели
+  // Глобальные функции для кнопок из HTML
   window.checkPassword = checkPassword;
   window.clearSearch = clearSearch;
   window.saveAllChanges = saveAllChanges;
