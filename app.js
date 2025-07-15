@@ -7,6 +7,7 @@ let searchQuery = "";
 const loginArea = document.getElementById("login-area");
 const saveAllBtn = document.getElementById("save-all");
 
+// Firebase конфиг и инициализация
 const firebaseConfig = {
   apiKey: "AIzaSyDn0YFzT9Xb2HZASgpEPna3n71IJYzrUlw",
   authDomain: "suaz-map-7ec10.firebaseapp.com",
@@ -22,6 +23,8 @@ const db = firebase.database();
 const dataRef = db.ref("apparatusData");
 
 function renderButtons() {
+  console.log("Данные для рендера:", editedData);
+
   const container = document.getElementById("buttons-container");
   container.innerHTML = "";
 
@@ -40,11 +43,11 @@ function renderButtons() {
     container.appendChild(addButton);
   }
 
-  const filteredKeys = keys.filter(key =>
+  const filteredKeys = keys.filter((key) =>
     editedData[key].name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  filteredKeys.forEach(key => {
+  filteredKeys.forEach((key) => {
     const data = editedData[key];
     const block = document.createElement("div");
     block.className = "button-block";
@@ -77,9 +80,11 @@ function renderButtons() {
       const deleteBtn = document.createElement("button");
       deleteBtn.textContent = "🗑";
       deleteBtn.className = "delete-button";
-      deleteBtn.onclick = e => {
+      deleteBtn.onclick = (e) => {
         e.stopPropagation();
-        if (confirm(`Удалить аппарат "${data.name || "Без названия"}"?`)) {
+        if (
+          confirm(`Удалить аппарат "${data.name || "Без названия"}"?`)
+        ) {
           delete editedData[key];
           renderButtons();
           showSaveButton();
