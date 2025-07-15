@@ -1,3 +1,4 @@
+// app.js
 import { initializeApp } from "firebase/app";
 import { getDatabase, ref, onValue, set } from "firebase/database";
 
@@ -43,10 +44,9 @@ function renderButtons() {
     container.appendChild(addButton);
   }
 
-  const filteredKeys = keys.filter(key => {
-    const name = editedData[key].name.toLowerCase();
-    return name.includes(searchQuery.toLowerCase());
-  });
+  const filteredKeys = keys.filter(key =>
+    editedData[key].name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   filteredKeys.forEach(key => {
     const data = editedData[key];
@@ -170,7 +170,7 @@ onValue(dataRef, snapshot => {
   renderButtons();
 });
 
-// Глобальные функции для кнопок в HTML
+// Глобальные функции для кнопок из HTML
 window.checkPassword = checkPassword;
 window.clearSearch = clearSearch;
 window.saveAllChanges = saveAllChanges;
