@@ -2,47 +2,17 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8" />
-  <title>Аппараты SuAz</title>
-  <link rel="stylesheet" href="style.css" />
-  <!-- Firebase SDK -->
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-    import { getFirestore } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-
-    window.firebaseConfig = {
-      apiKey: "AIzaSyDn0YFzT9Xb2HZASgpEPna3n71IJYzrUlw",
-      authDomain: "suaz-map-7ec10.firebaseapp.com",
-      projectId: "suaz-map-7ec10",
-      storageBucket: "suaz-map-7ec10.firebasestorage.app",
-      messagingSenderId: "636327827694",
-      appId: "1:636327827694:web:43766f059d5ee549f93bff"
-    };
-
-    window.firebaseInit = async function() {
-      const app = initializeApp(window.firebaseConfig);
-      window.db = getFirestore(app);
-    };
-  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Аппараты</title>
+  <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-  <h1>Аппараты по выдаче воды</h1>
+  <h1>Аппараты</h1>
+  <div id="device-container" class="grid"></div>
 
-  <div id="login-area">
-    <input type="password" id="admin-password" placeholder="Введите пароль для редактирования" />
-    <button onclick="checkPassword()">Войти</button>
-  </div>
+  <button id="edit-button">Редактировать</button>
+  <button id="save-button" style="display: none;">Сохранить</button>
 
-  <div id="search-area">
-    <input type="text" id="search-input" placeholder="Поиск по названию..." />
-    <button id="clear-search" onclick="clearSearch()">❌</button>
-  </div>
-
-  <div id="buttons-container"></div>
-
-  <div class="footer-text">made by Eldar Aliev</div>
-
-  <button id="save-all" onclick="saveAllChanges()">💾 Сохранить все</button>
-
-  <script src="app.js" type="module"></script>
+  <script type="module" src="app.js"></script>
 </body>
 </html>
