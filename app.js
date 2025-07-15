@@ -20,15 +20,14 @@ let isAdmin = false;
 let editedData = {};
 let searchQuery = "";
 
-// 🔁 Получаем данные из Firebase
+// 🔁 Получаем данные
 onValue(dataRef, (snapshot) => {
   const data = snapshot.val();
   if (Array.isArray(data)) {
-    // Преобразуем массив в объект
     editedData = {};
-    data.forEach((entry, index) => {
+    data.forEach((entry, i) => {
       if (entry && typeof entry === "object") {
-        editedData[`device_${index}`] = entry;
+        editedData[`device_${i}`] = entry;
       }
     });
   } else {
@@ -39,7 +38,6 @@ onValue(dataRef, (snapshot) => {
   renderButtons();
 });
 
-// 🎨 Рендер кнопок
 function renderButtons() {
   const container = document.getElementById("buttons-container");
   container.innerHTML = "";
