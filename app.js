@@ -1,176 +1,112 @@
-const PASSWORD = "920583104217";
-let isAdmin = false;
-let savedData = {};
-let editedData = {};
-let searchQuery = "";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getDatabase, ref, get, set } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
-const BIN_ID = "6874d0705a9d63639737dc42";
-const MASTER_KEY = "$2a$10$Op35jLJdn0V2TX13uR2A.eCiXuW69Hj/W8VYRGB4TRX2X9MuFXts2";
+// Твой конфиг
+const firebaseConfig = {
+  apiKey: "AIzaSyDn0YFzT9Xb2HZASgpEPna3n71IJYzrUlw",
+  authDomain: "suaz-map-7ec10.firebaseapp.com",
+  databaseURL: "https://suaz-map-7ec10-default-rtdb.firebaseio.com",
+  projectId: "suaz-map-7ec10",
+  storageBucket: "suaz-map-7ec10.appspot.com",
+  messagingSenderId: "636327827694",
+  appId: "1:636327827694:web:89c68cdba0b15e65f93bff"
+};
 
-// Загрузка с JSONBin
-async function loadData() {
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+const dbRef = ref(db, "devices");
+
+let devices = [];
+let editMode = false;
+
+const container = document.getElementById("device-container");
+const editButton = document.getElementById("edit-button");
+const saveButton = document.getElementById("save-button");
+
+async function loadDevices() {
   try {
-    const res = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, {
-      headers: {
-        "X-Master-Key": MASTER_KEY
-      }
-    });
-    const json = await res.json();
-    const arrayData = json.record;
-
-    if (!Array.isArray(arrayData)) {
-      console.error("Ошибка: ожидается массив, а пришло:", arrayData);
-      return;
+    const snapshot = await get(dbRef);
+    if (snapshot.exists()) {
+      devices = snapshot.val();
+    } else {
+      devices = [];
     }
-
-    savedData = {};
-    arrayData.forEach((item, index) => {
-      const id = `device_${index}`;
-      savedData[id] = {
-        name: item.name,
-        address: item.address,
-        mapLink: item.mapLink
-      };
-    });
-
-    editedData = JSON.parse(JSON.stringify(savedData));
-    renderButtons();
+    renderDevices();
   } catch (err) {
-    console.error("Ошибка загрузки данных:", err);
+    console.error("Ошибка загрузки:", err);
   }
 }
 
-function renderButtons() {
-  const container = document.getElementById("buttons-container");
+function renderDevices() {
   container.innerHTML = "";
 
-  const keys = Object.keys(editedData).sort();
+  const list = devices.length > 0 ? devices : Array(6).fill("");
 
-  if (isAdmin) {
-    const addButton = document.createElement("button");
-    addButton.textContent = "➕ Добавить аппарат";
-    addButton.className = "add-button";
-    addButton.onclick = () => {
-      const id = `device_${Date.now()}`;
-      editedData[id] = { name: "", address: "", mapLink: "" };
-      renderButtons();
-      showSaveButton();
-    };
-    container.appendChild(addButton);
-  }
+  list.forEach((device, index) => {
+    const el = document.createElement("div");
+    el.className = "device" + (editMode ? " editable" : "");
 
-  const filteredKeys = keys.filter((key) => {
-    const name = editedData[key].name.toLowerCase();
-    return name.includes(searchQuery.toLowerCase());
-  });
-
-  filteredKeys.forEach((key) => {
-    const data = editedData[key];
-    const block = document.createElement("div");
-    block.className = "button-block";
-
-    if (isAdmin) {
-      const nameInput = document.createElement("input");
-      nameInput.value = data.name;
-      nameInput.placeholder = "Название аппарата";
-      nameInput.oninput = () => {
-        editedData[key].name = nameInput.value;
+    if (editMode) {
+      const input = document.createElement("input");
+      input.value = device;
+      input.placeholder = "Название аппарата";
+      input.addEventListener("input", (e) => {
+        devices[index] = e.target.value;
         showSaveButton();
-      };
+      });
 
-      const addressInput = document.createElement("textarea");
-      addressInput.value = data.address;
-      addressInput.placeholder = "Адрес аппарата";
-      addressInput.oninput = () => {
-        editedData[key].address = addressInput.value;
+      const delBtn = document.createElement("button");
+      delBtn.textContent = "Удалить";
+      delBtn.addEventListener("click", () => {
+        devices.splice(index, 1);
         showSaveButton();
-      };
+        renderDevices();
+      });
 
-      const mapInput = document.createElement("input");
-      mapInput.value = data.mapLink;
-      mapInput.placeholder = "Ссылка на карту";
-      mapInput.oninput = () => {
-        editedData[key].mapLink = mapInput.value;
-        showSaveButton();
-      };
-
-      const deleteBtn = document.createElement("button");
-      deleteBtn.textContent = "🗑";
-      deleteBtn.className = "delete-button";
-      deleteBtn.onclick = (e) => {
-        e.stopPropagation();
-        const confirmDelete = confirm(`Вы точно хотите удалить "${data.name || 'Без названия'}"?`);
-        if (confirmDelete) {
-          delete editedData[key];
-          renderButtons();
-          showSaveButton();
-        }
-      };
-
-      block.appendChild(deleteBtn);
-      block.appendChild(nameInput);
-      block.appendChild(addressInput);
-      block.appendChild(mapInput);
+      el.appendChild(input);
+      el.appendChild(delBtn);
     } else {
-      if (!data.name && !data.address) return;
-
-      const title = document.createElement("h3");
-      title.textContent = data.name || "Без названия";
-
-      const address = document.createElement("p");
-      address.textContent = data.address || "Адрес не указан";
-
-      block.appendChild(title);
-      block.appendChild(address);
-
-      if (data.mapLink) {
-        const linkButton = document.createElement("a");
-        linkButton.href = data.mapLink;
-        linkButton.textContent = "Открыть в карте";
-        linkButton.target = "_blank";
-        linkButton.className = "map-link-button";
-        block.appendChild(linkButton);
-      }
+      el.textContent = device || "Пусто";
     }
 
-    container.appendChild(block);
+    container.appendChild(el);
   });
-}
 
-function checkPassword() {
-  const input = document.getElementById("admin-password");
-  if (input.value === PASSWORD) {
-    isAdmin = true;
-    input.value = "";
-    document.getElementById("login-area").style.display = "none";
-    renderButtons();
-  } else {
-    alert("Неверный пароль");
+  if (editMode) {
+    const addBtn = document.createElement("button");
+    addBtn.textContent = "+ Добавить аппарат";
+    addBtn.addEventListener("click", () => {
+      devices.push("");
+      showSaveButton();
+      renderDevices();
+    });
+    container.appendChild(addBtn);
   }
 }
 
 function showSaveButton() {
-  document.getElementById("save-all").style.display = "block";
+  saveButton.style.display = "inline-block";
 }
 
-function saveAllChanges() {
-  savedData = JSON.parse(JSON.stringify(editedData));
-  localStorage.setItem("apparatusData", JSON.stringify(savedData));
-  document.getElementById("save-all").style.display = "none";
-  alert("Все изменения сохранены (локально)!");
-  renderButtons();
-}
-
-function clearSearch() {
-  searchQuery = "";
-  document.getElementById("search-input").value = "";
-  renderButtons();
-}
-
-document.getElementById("search-input").addEventListener("input", (e) => {
-  searchQuery = e.target.value;
-  renderButtons();
+editButton.addEventListener("click", () => {
+  editMode = !editMode;
+  editButton.textContent = editMode ? "Отмена" : "Редактировать";
+  saveButton.style.display = "none";
+  renderDevices();
 });
 
-// Загружаем с JSONBin при запуске
-loadData();
+saveButton.addEventListener("click", async () => {
+  const filtered = devices.filter((d) => d.trim() !== "");
+  try {
+    await set(dbRef, filtered);
+    alert("Сохранено!");
+    saveButton.style.display = "none";
+    editMode = false;
+    editButton.textContent = "Редактировать";
+    loadDevices();
+  } catch (err) {
+    console.error("Ошибка сохранения:", err);
+  }
+});
+
+loadDevices();
