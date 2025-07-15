@@ -20,10 +20,15 @@
 
   <div id="buttons-container"></div>
 
-  <div class="footer-text">made by Eldar Aliev</div>
+  <div class="footer-text">made by ChatGPT</div>
 
   <button id="save-all" onclick="saveAllChanges()">💾 Сохранить все</button>
 
-  <script type="module" src="app.js"></script>
+  <!-- Firebase SDK (compat версия для простоты) -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
+  <!-- Твой скрипт -->
+  <script src="app.js"></script>
 </body>
 </html>
